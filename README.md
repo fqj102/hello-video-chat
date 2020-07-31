@@ -42,3 +42,27 @@ docker-compose -f docker-compose.yml up
 
 The webapp will be exposed on http://localhost:3000, http://localhost:3001 and http://localhost:3002, each one with a different socket connection
 
+
+
+
+## modify client  namespace fix
+
+main.js
+```js
+Vue.use(new VueSocketIO({
+  debug: true,
+  options: { useConnectionNamespace: true },  //add
+  connection: io(`${url}/videoChat`, { autoConnect: false }),  
+  vuex: {
+    store,
+    actionPrefix: 'SOCKET_',
+    mutationPrefix: 'SOCKET_'
+  },
+}))
+``` 
+
+modify all this.$socket => this.$socket.videoChat
+
+
+
+
