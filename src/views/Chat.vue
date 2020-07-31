@@ -84,91 +84,95 @@ export default {
     Conference
   },
   sockets: {
-    newUser: function({users, username}) {
-      const isMe = this.$store.state.username === username
-      if (users.length > this.users.length) {
-        this.messages.push({join: true, msg:`${!isMe ? username : 'You'} joined the room`})
-      } else if(users.length < this.users.length) {
-        this.messages.push({join: true, msg:`${username} left the room`})
+    videoChat: {
+      newUser: function ({users, username}) {
+        const isMe = this.$store.state.username === username
+        if (users.length > this.users.length) {
+          this.messages.push({join: true, msg: `${!isMe ? username : 'You'} joined the room`})
+        } else if (users.length < this.users.length) {
+          this.messages.push({join: true, msg: `${username} left the room`})
+        }
+        this.users = [...users]
+      },
+
+      newMessage: function ({message, username}) {
+        const isMe = this.$store.state.username === username
+        const msg = isMe ? ` ${message}` : {username, message}
+        this.messages.push({msg, isMe})
+      },
+
+      privateChat: function ({to, from}) {
+        if (this.$store.state.username !== to || this.openPrivateChat.chat) return
+        //Open chat when the other peer opens it
+        this.openPrivateChat = {
+          ...this.openPrivateChat,
+          chat: true,
+          user: from,
+          room: to
+        }
+      },
+
+      privateMessage: function ({privateMessage, to, from}) {
+        const isObj = typeof privateMessage === "object"
+        const isFromMe = this.$store.state.username === from
+        if (isObj && isFromMe) return
+
+        this.openPrivateChat.msg.push({
+          msg: isObj ? privateMessage.msg : privateMessage,
+          isMe: this.$store.state.username !== to
+        })
+      },
+
+      leavePrivateRoom: function ({privateMessage}) {
+        if (this.openPrivateChat.closed) return
+        this.openPrivateChat.msg.push({msg: privateMessage})
+        this.openPrivateChat = {...this.openPrivateChat, closed: true}
+      },
+
+      leaveChat: function ({users, message}) {
+        this.messages.push({join: true, msg: message})
+        this.users = [...users]
+      },
+
+      PCSignalingConference: function ({desc, from, to, candidate}) {
+        if (from === this.$store.state.username || (!!to && to !== this.$store.state.username)) return
+
+        if (desc) {
+          if (desc.type === DESCRIPTION_TYPE.offer)
+            this.conference = {...this.conference, offer: {from, desc}, open: true}
+          else if (desc.type === DESCRIPTION_TYPE.answer)
+            this.conference = {...this.conference, answer: {from, desc}}
+        } else if (candidate) {
+          this.conference = {...this.conference, candidate: {from, candidate}}
+        }
+      },
+
+      conferenceInvitation: function ({to, from, message}) {
+        if (message && this.$store.state.username === from) return this.$toastr.w(message)
+        if (this.$store.state.username !== to) return
+
+        this.conference.room = from
+        this.$socket.videoChat.emit(WS_EVENTS.joinConference, {
+          ...this.$store.state,
+          to: from,
+          from: this.$store.state.username
+        })
+      },
+
+      joinConference: function ({from}) {
+        if (this.$store.state.username === from) return
+        this.conference = {...this.conference, user: from, userLeft: null}
+      },
+
+      leaveConference: function ({from}) {
+        from === this.conference.room
+                ? this.conference = {}
+                : this.conference = {...this.conference, userLeft: from, user: null}
       }
-      this.users = [...users]
-    },
-
-    newMessage: function({ message, username }) {
-      const isMe = this.$store.state.username === username
-      const msg = isMe ? ` ${message}` : {username, message}
-      this.messages.push({ msg, isMe })
-    },
-
-    privateChat: function({ to, from }) {
-      if (this.$store.state.username !== to || this.openPrivateChat.chat) return
-      //Open chat when the other peer opens it
-      this.openPrivateChat = { ...this.openPrivateChat,
-        chat: true,
-        user: from,
-        room: to
-      }
-    },
-
-    privateMessage: function({ privateMessage, to, from }) {
-      const isObj = typeof privateMessage === "object"
-      const isFromMe = this.$store.state.username === from
-      if (isObj && isFromMe) return
-
-      this.openPrivateChat.msg.push({
-        msg: isObj ? privateMessage.msg : privateMessage,
-        isMe: this.$store.state.username !== to
-      })
-    },
-
-    leavePrivateRoom: function({ privateMessage }) {
-      if (this.openPrivateChat.closed) return
-      this.openPrivateChat.msg.push({ msg: privateMessage })
-      this.openPrivateChat = { ...this.openPrivateChat, closed: true }
-    },
-
-    leaveChat: function({ users, message }) {
-      this.messages.push({join: true, msg: message})
-      this.users = [...users]
-    },
-
-    PCSignalingConference: function({ desc, from, to, candidate }) {
-      if (from === this.$store.state.username || (!!to && to !== this.$store.state.username)) return
-
-      if (desc) {
-        if (desc.type === DESCRIPTION_TYPE.offer) 
-          this.conference = { ...this.conference, offer: { from, desc }, open: true }
-        else if (desc.type === DESCRIPTION_TYPE.answer) 
-          this.conference = { ...this.conference, answer: { from, desc } }
-      } else if (candidate) {
-        this.conference = { ...this.conference, candidate: { from, candidate } }
-      } 
-    },
-
-    conferenceInvitation: function({ to, from, message}) {
-      if (message && this.$store.state.username === from) return this.$toastr.w(message)
-      if (this.$store.state.username !== to) return
-      
-      this.conference.room = from
-      this.$socket.emit(WS_EVENTS.joinConference, { ...this.$store.state,
-        to: from,
-        from: this.$store.state.username
-      })
-    },
-
-    joinConference: function({ from }) {
-      if (this.$store.state.username === from ) return
-      this.conference = { ...this.conference, user: from, userLeft: null }   
-    },
-
-    leaveConference: function({ from }) {
-     from === this.conference.room 
-          ? this.conference = {} 
-          : this.conference = {...this.conference, userLeft: from, user: null }
     }
   },
   beforeCreate: function() {
-    this.$socket.emit(WS_EVENTS.joinRoom, this.$store.state)
+    this.$socket.videoChat.emit(WS_EVENTS.joinRoom, this.$store.state)
   },
   data: function() {
     return {
@@ -197,13 +201,13 @@ export default {
   methods: {
     onChangeRoom(val) {
       if (this.room === val) return
-      this.$socket.emit(WS_EVENTS.leaveRoom, this.$store.state)
+      this.$socket.videoChat.emit(WS_EVENTS.leaveRoom, this.$store.state)
       this.$store.dispatch(STORE_ACTIONS.changeRoom, val)
       this.messages.length = 0
-      this.$socket.emit(WS_EVENTS.joinRoom, this.$store.state)
+      this.$socket.videoChat.emit(WS_EVENTS.joinRoom, this.$store.state)
     },
     sendMessage(msg) {
-      this.$socket.emit(WS_EVENTS.publicMessage, { ...this.$store.state, message: msg })
+      this.$socket.videoChat.emit(WS_EVENTS.publicMessage, { ...this.$store.state, message: msg })
     },
     openChat(user) {
       this.openPrivateChat = { ...this.openPrivateChat,
@@ -223,12 +227,12 @@ export default {
     },
     async logout() {
       try {
-        this.$socket.emit(WS_EVENTS.leaveChat, {
+        this.$socket.videoChat.emit(WS_EVENTS.leaveChat, {
           room: this.room,
           username: this.$store.state.username
         })
         await this.$store.dispatch(STORE_ACTIONS.leaveChat, this.$store.state.username)
-        this.$socket.close()
+        this.$socket.videoChat.close()
         this.$router.push("/")
       } catch (error) {
         console.log(error)

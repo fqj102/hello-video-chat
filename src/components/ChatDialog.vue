@@ -62,23 +62,25 @@ export default {
     showDialog: Object
   },
   sockets: {
-    privateMessagePCSignaling: function({ desc, from, candidate }) {
-      if (from === this.$store.state.username) return
+    videoChat: {
+      privateMessagePCSignaling: function ({desc, from, candidate}) {
+        if (from === this.$store.state.username) return
 
-      if (desc) {
-        if (desc.type === DESCRIPTION_TYPE.offer) { // If we have an income call
-          this.openChat(desc, from)
-        } else if (desc.type === DESCRIPTION_TYPE.answer) { // If we have a response
-          this.videoAnswer = { ...this.videoAnswer, remoteDesc: desc }
+        if (desc) {
+          if (desc.type === DESCRIPTION_TYPE.offer) { // If we have an income call
+            this.openChat(desc, from)
+          } else if (desc.type === DESCRIPTION_TYPE.answer) { // If we have a response
+            this.videoAnswer = {...this.videoAnswer, remoteDesc: desc}
+          } else {
+            console.log("Unsupported SDP type")
+          }
+          // Candidate
+        } else if (candidate) {
+          this.videoAnswer = {...this.videoAnswer, candidate}
+          // Other peer has closed the video
         } else {
-          console.log("Unsupported SDP type")
+          this.videoCall = false
         }
-      // Candidate
-      } else if (candidate) {
-        this.videoAnswer = { ...this.videoAnswer, candidate }
-      // Other peer has closed the video
-      } else {
-        this.videoCall = false
       }
     }
   },
@@ -97,7 +99,7 @@ export default {
   methods: {
     closeChat() {
       this.videoCall = false
-      this.$socket.emit(WS_EVENTS.leavePrivateRoom, {
+      this.$socket.videoChat.emit(WS_EVENTS.leavePrivateRoom, {
         room: this.$store.state.room,
         to: this.showDialog.room,
         from: this.$store.state.username
@@ -112,7 +114,7 @@ export default {
       // Do not send empty messages
       if(typeof msg !== "object" && this.privateMessage.replace(/\s/g, "").length === 0) return
 
-      this.$socket.emit(WS_EVENTS.privateMessage, {
+      this.$socket.videoChat.emit(WS_EVENTS.privateMessage, {
         privateMessage: msg,
         to: this.showDialog.user,
         from: this.$store.state.username,
@@ -131,7 +133,7 @@ export default {
       if (chat && chat !== oldVal.chat ) {
         // Peer openning private chat
         if (this.showDialog.room !== this.$store.state.username){
-            this.$socket.emit(WS_EVENTS.joinPrivateRoom, {
+            this.$socket.videoChat.emit(WS_EVENTS.joinPrivateRoom, {
               ...this.$store.state,
               to: this.showDialog.user,
               from: this.$store.state.username,
@@ -139,7 +141,7 @@ export default {
         }
         // Peer receiving a private chat request
         if (this.showDialog.room === this.$store.state.username) {
-          this.$socket.emit(WS_EVENTS.joinPrivateRoom, {
+          this.$socket.videoChat.emit(WS_EVENTS.joinPrivateRoom, {
             ...this.$store.state,
             // to: this.showDialog.user, 
             to: this.$store.state.username, 

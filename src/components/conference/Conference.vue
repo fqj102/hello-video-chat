@@ -70,7 +70,7 @@ export default {
     // Admin join the room
     if (this.conference.admin) {
       await this.getUserMedia()
-      this.$socket.emit(WS_EVENTS.joinConference, { ...this.$store.state,
+      this.$socket.videoChat.emit(WS_EVENTS.joinConference, { ...this.$store.state,
         to: this.username
       })
     }
@@ -83,7 +83,7 @@ export default {
   beforeDestroy() {
     Object.values(this.peers).forEach(peer => peer.pc.close())
     this.peers = {}
-    this.$socket.emit(WS_EVENTS.leaveConference, {  ...this.$store.state,
+    this.$socket.videoChat.emit(WS_EVENTS.leaveConference, {  ...this.$store.state,
       from: this.username,
       conferenceRoom: this.conference.room
     })
@@ -94,7 +94,7 @@ export default {
       this.initWebRTC(offer, desc)
     },
     invitate(user) {
-      this.$socket.emit(WS_EVENTS.conferenceInvitation, {
+      this.$socket.videoChat.emit(WS_EVENTS.conferenceInvitation, {
         room: this.$store.state.room,
         to: user,
         from: this.username

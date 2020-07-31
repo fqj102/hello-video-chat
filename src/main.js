@@ -14,7 +14,8 @@ console.log(`Browser ${adapter.browserDetails.browser} - version ${adapter.brows
 // Socket config
 Vue.use(new VueSocketIO({
   debug: true,
-  connection: io(`${url}/video-chat`, { autoConnect: false }),
+  options: { useConnectionNamespace: true },
+  connection: io(`${url}/videoChat`, { autoConnect: false }),
   vuex: {
     store,
     actionPrefix: 'SOCKET_',

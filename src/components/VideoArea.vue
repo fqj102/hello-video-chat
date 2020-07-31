@@ -64,7 +64,7 @@ export default {
   beforeDestroy() {
     this.pc.close()
     this.pc = null
-    this.$socket.emit(WS_EVENTS.privateMessagePCSignaling, {  
+    this.$socket.videoChat.emit(WS_EVENTS.privateMessagePCSignaling, {
       to: this.to,
       from: this.$store.state.username,
       room: this.room

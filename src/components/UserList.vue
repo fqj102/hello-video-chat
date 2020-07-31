@@ -49,7 +49,7 @@ export default {
     },
     changeStatus() {
       this.$store.dispatch(STORE_ACTIONS.changeStatus).then( ()=> {
-        this.$socket.emit(WS_EVENTS.changeStatus, this.$store.state)
+        this.$socket.videoChat.emit(WS_EVENTS.changeStatus, this.$store.state)
       })
     }
   },

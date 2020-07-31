@@ -42,8 +42,10 @@ import { STORE_ACTIONS } from "./../utils/config"
 export default {
   name: "home",
   sockets:{
-    connect() {
-      this.$router.push("/chat")
+    videoChat:{
+      connect() {
+        this.$router.push("/chat")
+      }
     }
   },
   data: () => ({
@@ -70,7 +72,7 @@ export default {
           room: this.room,
           username: this.username
         })
-        this.$socket.open()
+        this.$socket.videoChat.open()
       } catch (error) {
         this.error = error.message ? error.message : this.defaultError
       }

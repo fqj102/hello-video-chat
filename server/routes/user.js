@@ -15,16 +15,12 @@ userRouter.post('/login', (req, res) => {
     console.log(`Login user ${newUser.username}`)
 
     ChatRedis
-        .getUser(newUser.username, config.KEY)
+        .getUser(newUser.room, newUser.username)
         .then(user => {
-            if (!user) {
-                ChatRedis.addUser(newUser.username, config.KEY, newUser)
-                console.log(`User ${newUser.username} logged`)
-                return res.send({ code: 200, message: 'Logged in succesfully' })
-            }
-
-            console.log(`User ${newUser.username} already exists`)
-            return res.send({ code: 401, message: 'Username already exists' })
+            console.log('db select user',user);
+            ChatRedis.addUser(newUser.room, newUser.username, newUser)
+             console.log(`User ${newUser.username} logged`)
+            return res.send({ code: 200, message: 'Logged in succesfully' })
         })
 })
 
@@ -34,7 +30,7 @@ userRouter.post('/logout', (req, res) => {
     console.log(`Logout user ${user.username}`)
 
     ChatRedis
-        .delUser(user.username, config.KEY)
+        .delUser(user.room, user.username)
         .then(data => {
             if (!data)
                 return res.send({ code: 400, message: 'User not found' })
