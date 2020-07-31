@@ -78,7 +78,9 @@ export default new Vuex.Store({
     leaveChat({ commit }, username) {
       return new Promise(async (resolve, reject) => {
         try {
-          const { body : { code } } = await Vue.http.post(`${url}/auth/logout`, { username })
+          const room = this.state.room;
+          const { body : { code } } = await Vue.http.post(`${url}/auth/logout`, { username ,room})
+          console.log('=========',code)
           if (code !== 200) reject()
           commit(STORE_ACTIONS.leaveChat)
           resolve()

@@ -29,13 +29,12 @@ userRouter.post('/logout', (req, res) => {
     const user = req.body
     console.log(`Logout user ${user.username}`)
 
-    ChatRedis
-        .delUser(user.room, user.username)
+    ChatRedis.delUser(user.room, user.username)
         .then(data => {
-            if (!data)
-                return res.send({ code: 400, message: 'User not found' })
-
-            return res.send({ code: 200, message: 'Logged in succesfully' })
+            if (data==0) {
+                return res.send({ code: 200, message: 'Log out succesfully'})
+            }
+            return res.send({ code: 400, message: 'Log out error' })
         })
 })
 
