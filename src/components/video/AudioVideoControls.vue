@@ -22,7 +22,7 @@ export default {
   },
   data: () => ({
     videoOn: true,
-    audioOn: true
+    audioOn: false
   }),
   methods: {
     swapVideo() {
