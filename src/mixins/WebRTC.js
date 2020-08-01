@@ -17,7 +17,7 @@ export const videoConfiguration = {
                     height: 250
                 },
             },
-            // TURN/STUN ice servers               
+            // TURN/STUN ice servers
             configuration: servers,
             // Offer config
             offerOptions: {
@@ -25,7 +25,7 @@ export const videoConfiguration = {
                 offerToReceiveVideo: 1
             },
 
-            // Local video 
+            // Local video
             myVideo: undefined,
             localStream: undefined,
             username: ""
@@ -104,7 +104,7 @@ export const videoConfiguration = {
             log(`${this.username} sends the ${isOffer} through the signal channel to ${to} in room ${room}`)
 
             // send the offer to the other peer
-            this.$socket.emit(conference ? WS_EVENTS.PCSignalingConference : WS_EVENTS.privateMessagePCSignaling, {
+            this.$socket.videoChat.emit(conference ? WS_EVENTS.PCSignalingConference : WS_EVENTS.privateMessagePCSignaling, {
                 desc: desc,
                 to: to,
                 from: this.username,
@@ -126,7 +126,7 @@ export const videoConfiguration = {
             pc.onicecandidate = ({ candidate }) => {
                 if (!candidate) return
                 setTimeout(() => {
-                    this.$socket.emit(conference ? WS_EVENTS.PCSignalingConference : WS_EVENTS.privateMessagePCSignaling, {
+                    this.$socket.videoChat.emit(conference ? WS_EVENTS.PCSignalingConference : WS_EVENTS.privateMessagePCSignaling, {
                         candidate,
                         to: to,
                         from: this.username,
